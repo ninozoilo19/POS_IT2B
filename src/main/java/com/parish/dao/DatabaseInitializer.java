@@ -59,5 +59,22 @@ public class DatabaseInitializer {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        String sqlActivityLogs = "CREATE TABLE IF NOT EXISTS activity_logs (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "user_id INTEGER, " +
+                "action_type TEXT, " + // Removed the restrictive CHECK constraint here
+                "description TEXT, " +
+                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP" +
+                ")";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(sqlActivityLogs);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
+
+
 }

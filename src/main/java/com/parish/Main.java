@@ -1,9 +1,10 @@
 package com.parish;
 
 import com.parish.dao.DatabaseInitializer;
-import com.parish.dao.ParishSystemDAO;
+import com.parish.dao.UserDao;
 import com.parish.model.SacramentalRecord;
 import com.parish.model.User;
+import com.parish.ui.AdminUserMenu;
 
 import java.util.List;
 import java.util.Scanner;
@@ -11,11 +12,11 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         DatabaseInitializer.initializeDatabase();
-        ParishSystemDAO dao = new ParishSystemDAO();
+        UserDao userDao = new UserDao();
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("=========================================");
-        System.out.println("  PARISH OFFICE RECORDS SYSTEM (CONSOLE)  ");
+        System.out.println(" PARISH OFFICE RECORDS SYSTEM  ");
         System.out.println("=========================================");
 
         System.out.print("Username: ");
@@ -23,7 +24,7 @@ public class Main {
         System.out.print("Password: ");
         String password = scanner.nextLine();
 
-        User user = dao.login(username, password);
+        User user = userDao.login(username, password);
         if (user == null) {
             System.out.println("Invalid credentials! Exiting.");
             return;
@@ -38,15 +39,25 @@ public class Main {
             if (!user.getRole().equals("PRIEST")) {
                 System.out.println("2. Add Parishioner & Sacramental Record");
             }
+            System.out.println("3. View System Audit Logs");
+            if (user.getRole().equals("ADMIN")) {
+                System.out.println("4. Manage User Accounts (Register/Delete)");
+            }
             System.out.println("0. Exit");
             System.out.print("Choose an option: ");
+
+            if (!scanner.hasNextInt()) {
+                System.out.println("Invalid input! Please enter a number.");
+                scanner.next();
+                continue;
+            }
 
             int choice = scanner.nextInt();
             scanner.nextLine(); // consume newline
 
             switch (choice) {
                 case 1:
-                    List<SacramentalRecord> records = dao.getAllRecords();
+                    List<SacramentalRecord> records = userDao.getAllRecords();
                     System.out.println("\n--- SACRAMENTAL RECORDS ---");
                     for (SacramentalRecord r : records) {
                         System.out.println("ID: " + r.getRecordId() +
@@ -80,12 +91,22 @@ public class Main {
                     int page = scanner.nextInt();
                     scanner.nextLine();
 
-                    boolean success = dao.addParishionerAndRecord(fName, lName, dob, contact, type, date, priest, book, page);
+                    boolean success = userDao.addParishionerAndRecord(user, fName, lName, dob, contact, type, date, priest, book, page);
                     if (success) {
                         System.out.println("Record successfully added!");
                     } else {
                         System.out.println("Failed to add record.");
                     }
+                    break;
+                case 3:
+                    AdminUserMenu.showAuditLogMenu(scanner, user);
+                    break;
+                case 4:
+                    if (!user.getRole().equals("ADMIN")) {
+                        System.out.println("Access denied. Admin privileges required.");
+                        break;
+                    }
+                    AdminUserMenu.showUserManagementMenu(scanner, user);
                     break;
                 case 0:
                     running = false;
