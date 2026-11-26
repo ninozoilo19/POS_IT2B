@@ -2,11 +2,10 @@ package com.parish;
 
 import com.parish.dao.DatabaseInitializer;
 import com.parish.dao.UserDao;
-import com.parish.model.SacramentalRecord;
 import com.parish.model.User;
 import com.parish.ui.AdminUserMenu;
+import com.parish.ui.SacramentalServicesMenu;
 
-import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -15,107 +14,106 @@ public class Main {
         UserDao userDao = new UserDao();
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("=========================================");
-        System.out.println(" PARISH OFFICE RECORDS SYSTEM  ");
-        System.out.println("=========================================");
+        boolean appRunning = true;
 
-        System.out.print("Username: ");
-        String username = scanner.nextLine();
-        System.out.print("Password: ");
-        String password = scanner.nextLine();
-
-        User user = userDao.login(username, password);
-        if (user == null) {
-            System.out.println("Invalid credentials! Exiting.");
-            return;
-        }
-
-        System.out.println("\nWelcome, " + user.getFullName() + " (" + user.getRole() + ")!");
-
-        boolean running = true;
-        while (running) {
-            System.out.println("\n--- MENU ---");
-            System.out.println("1. View All Sacramental Records");
-            if (!user.getRole().equals("PRIEST")) {
-                System.out.println("2. Add Parishioner & Sacramental Record");
-            }
-            System.out.println("3. View System Audit Logs");
-            if (user.getRole().equals("ADMIN")) {
-                System.out.println("4. Manage User Accounts (Register/Delete)");
-            }
+        while (appRunning) {
+            System.out.println("\n=========================================");
+            System.out.println(" PARISH OFFICE RECORDS SYSTEM  ");
+            System.out.println("=========================================");
+            System.out.println("1. Login");
             System.out.println("0. Exit");
             System.out.print("Choose an option: ");
 
             if (!scanner.hasNextInt()) {
                 System.out.println("Invalid input! Please enter a number.");
-                scanner.next();
+                scanner.nextLine();
                 continue;
             }
 
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // consume newline
+            int authChoice = scanner.nextInt();
+            scanner.nextLine();
 
-            switch (choice) {
-                case 1:
-                    List<SacramentalRecord> records = userDao.getAllRecords();
-                    System.out.println("\n--- SACRAMENTAL RECORDS ---");
-                    for (SacramentalRecord r : records) {
-                        System.out.println("ID: " + r.getRecordId() +
-                                " | Type: " + r.getSacramentType() +
-                                " | Date: " + r.getSacramentDate() +
-                                " | Priest: " + r.getOfficiatingPriest());
-                    }
+            if (authChoice == 0) {
+                System.out.println("Exiting system. Goodbye!");
+                appRunning = false;
+                continue;
+            } else if (authChoice != 1) {
+                System.out.println("Invalid option! Please choose 1 to Login or 0 to Exit.");
+                continue;
+            }
+
+            User user = null;
+            boolean loginCancelled = false;
+
+            while (user == null) {
+                System.out.print("Username: ");
+                String username = scanner.nextLine();
+
+                if (username.equals("0")) {
+                    loginCancelled = true;
                     break;
-                case 2:
-                    if (user.getRole().equals("PRIEST")) {
-                        System.out.println("Access denied. Priests have read-only permissions.");
-                        break;
-                    }
-                    System.out.print("First Name: ");
-                    String fName = scanner.nextLine();
-                    System.out.print("Last Name: ");
-                    String lName = scanner.nextLine();
-                    System.out.print("Date of Birth (YYYY-MM-DD): ");
-                    String dob = scanner.nextLine();
-                    System.out.print("Contact Number: ");
-                    String contact = scanner.nextLine();
-                    System.out.print("Sacrament Type (BAPTISM, CONFIRMATION, MARRIAGE, FUNERAL): ");
-                    String type = scanner.nextLine().toUpperCase();
-                    System.out.print("Sacrament Date (YYYY-MM-DD): ");
-                    String date = scanner.nextLine();
-                    System.out.print("Officiating Priest: ");
-                    String priest = scanner.nextLine();
-                    System.out.print("Registry Book Number: ");
-                    int book = scanner.nextInt();
-                    System.out.print("Registry Page Number: ");
-                    int page = scanner.nextInt();
+                }
+
+                System.out.print("Password: ");
+                String password = scanner.nextLine();
+
+                user = userDao.login(username, password);
+                if (user == null) {
+                    System.out.println("Invalid credentials! Please retype your username and password.");
+                }
+            }
+
+            if (loginCancelled || user == null) {
+                continue;
+            }
+
+            System.out.println("\nWelcome, " + user.getFullName() + " (" + user.getRole() + ")!");
+
+            boolean loggedIn = true;
+            while (loggedIn) {
+                System.out.println("\n--- MAIN MENU ---");
+                System.out.println("1. Sacramental Services");
+                System.out.println("2. View System Audit Logs");
+                if (user.getRole().equals("ADMIN")) {
+                    System.out.println("3. Manage User Accounts (Register/Delete)");
+                }
+                System.out.println("4. Logout");
+                System.out.print("Choose an option: ");
+
+                if (!scanner.hasNextInt()) {
+                    System.out.println("Invalid input! Please enter a number.");
                     scanner.nextLine();
+                    continue;
+                }
 
-                    boolean success = userDao.addParishionerAndRecord(user, fName, lName, dob, contact, type, date, priest, book, page);
-                    if (success) {
-                        System.out.println("Record successfully added!");
-                    } else {
-                        System.out.println("Failed to add record.");
-                    }
-                    break;
-                case 3:
-                    AdminUserMenu.showAuditLogMenu(scanner, user);
-                    break;
-                case 4:
-                    if (!user.getRole().equals("ADMIN")) {
-                        System.out.println("Access denied. Admin privileges required.");
+                int choice = scanner.nextInt();
+                scanner.nextLine();
+
+                switch (choice) {
+                    case 1:
+                        SacramentalServicesMenu.showMenu(scanner, user);
                         break;
-                    }
-                    AdminUserMenu.showUserManagementMenu(scanner, user);
-                    break;
-                case 0:
-                    running = false;
-                    System.out.println("Exiting system. Goodbye!");
-                    break;
-                default:
-                    System.out.println("Invalid option.");
+                    case 2:
+                        AdminUserMenu.showAuditLogMenu(scanner, user);
+                        break;
+                    case 3:
+                        if (!user.getRole().equals("ADMIN")) {
+                            System.out.println("Access denied. Admin privileges required.");
+                            break;
+                        }
+                        AdminUserMenu.showUserManagementMenu(scanner, user);
+                        break;
+                    case 4:
+                        userDao.logout(user);
+                        System.out.println("You have been logged out.");
+                        loggedIn = false;
+                        break;
+                    default:
+                        System.out.println("Invalid option.");
+                }
             }
         }
+
         scanner.close();
     }
 }

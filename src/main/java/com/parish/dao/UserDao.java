@@ -36,6 +36,12 @@ public class UserDao {
         return loggedInUser;
     }
 
+    public void logout(User user) {
+        if (user != null) {
+            logDao.logAction(user.getUserId(), "LOGOUT", "User " + user.getUsername() + " logged out.");
+        }
+    }
+
     public boolean registerUser(String username, String password, String fullName, String role, int adminUserId) {
         String sql = "INSERT INTO users (username, password_hash, full_name, role) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -140,6 +146,7 @@ public class UserDao {
         }
         return list;
     }
+
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
         String sql = "SELECT user_id, username, full_name, role FROM users";

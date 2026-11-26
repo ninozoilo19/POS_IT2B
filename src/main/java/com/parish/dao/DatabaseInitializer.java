@@ -1,8 +1,8 @@
 package com.parish.dao;
 
 import java.sql.Connection;
-import java.sql.Statement;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public class DatabaseInitializer {
     public static void initializeDatabase() {
@@ -12,7 +12,7 @@ public class DatabaseInitializer {
                 username TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 full_name TEXT NOT NULL,
-                role TEXT NOT NULL CHECK (role IN ('ADMIN', 'STAFF', 'PRIEST')),
+                role TEXT NOT NULL CHECK (role IN ('ADMIN', 'SECRETARY', 'STAFF', 'PRIEST')),
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -51,6 +51,9 @@ public class DatabaseInitializer {
 
             INSERT OR IGNORE INTO users (user_id, username, password_hash, full_name, role) 
             VALUES (1, 'admin', 'admin123', 'System Administrator', 'ADMIN');
+
+            INSERT OR IGNORE INTO users (username, password_hash, full_name, role) 
+            VALUES ('secretary', 'sec123', 'Parish Secretary', 'SECRETARY');
         """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -59,22 +62,5 @@ public class DatabaseInitializer {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-        String sqlActivityLogs = "CREATE TABLE IF NOT EXISTS activity_logs (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "user_id INTEGER, " +
-                "action_type TEXT, " + // Removed the restrictive CHECK constraint here
-                "description TEXT, " +
-                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP" +
-                ")";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute(sqlActivityLogs);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
-
-
 }

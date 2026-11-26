@@ -83,7 +83,7 @@ public class AdminUserMenu {
                     String password = scanner.nextLine();
                     System.out.print("Enter full name: ");
                     String fullName = scanner.nextLine();
-                    System.out.print("Enter role (PRIEST, STAFF, ADMIN): ");
+                    System.out.print("Enter role (PRIEST, SECRETARY, STAFF, ADMIN): ");
                     String role = scanner.nextLine().toUpperCase();
 
                     boolean created = userDao.registerUser(username, password, fullName, role, adminUser.getUserId());
